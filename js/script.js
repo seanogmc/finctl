@@ -1,3 +1,5 @@
+import { getStartOfMonth, getEndOfMonth } from "./util/dates.js";
+
 let accessToken = null;
 const googleBtn = document.getElementById("signin-btn");
 
@@ -24,22 +26,8 @@ async function handleAuthResponse(response) {
 }
 
 async function fetchCalendarEvents() {
-  const now = new Date();
-
-  const startOfMonth = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1,
-  ).toISOString();
-
-  const endOfMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-  ).toISOString();
+  const startOfMonth = getStartOfMonth();
+  const endOfMonth = getEndOfMonth();
 
   const params = new URLSearchParams({
     timeMin: startOfMonth,
@@ -56,6 +44,15 @@ async function fetchCalendarEvents() {
   );
 
   const data = await result.json();
-  console.log("Calendar events:", data.items);
+  const shifts = data.items;
+
+  const listOfShifts = shifts.map((s) => {
+    const startDate = new Date(s.start.dateTime);
+    const endDate = new Date(s.end.dateTime);
+
+    const li = document.createElement("li");
+    li.textContent = `${startDate.toLocaleString("en-GB")}, ${s.summary}: ${startDate.toLocaleTimeString("en-GB")} - ${endDate.toLocaleTimeString("en-GB")}`;
+  });
+
   return data.items;
 }
