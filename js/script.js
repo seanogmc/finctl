@@ -1,7 +1,10 @@
 import { getStartOfMonth, getEndOfMonth } from "./util/dates.js";
+import { calcPay } from "./util/pay.js";
 
 let accessToken = null;
 const googleBtn = document.getElementById("signin-btn");
+const shiftList = document.getElementById("shift-list");
+const monthRevenue = document.getElementById("month-revenue");
 
 googleBtn.addEventListener("click", () => {
   const client = google.accounts.oauth2.initCodeClient({
@@ -45,14 +48,21 @@ async function fetchCalendarEvents() {
 
   const data = await result.json();
   const shifts = data.items;
+  let monthlyRevenue = 0;
 
-  const listOfShifts = shifts.map((s) => {
+  shiftList.textContent = "";
+
+  const formattedShifts = shifts.map((s) => {
+    const shiftRevenue = calcPay(s);
+    monthlyRevenue += shiftRevenue;
     const startDate = new Date(s.start.dateTime);
     const endDate = new Date(s.end.dateTime);
-
     const li = document.createElement("li");
-    li.textContent = `${startDate.toLocaleString("en-GB")}, ${s.summary}: ${startDate.toLocaleTimeString("en-GB")} - ${endDate.toLocaleTimeString("en-GB")}`;
+    li.textContent = `${startDate.toLocaleDateString("en-GB")}: ${startDate.toLocaleTimeString("en-GB")} - ${endDate.toLocaleTimeString("en-GB")} (£${shiftRevenue})`;
+
+    return li;
   });
 
-  return data.items;
+  shiftList.append(...formattedShifts);
+  monthRevenue.textContent = `This month's pay: £${monthlyRevenue.toFixed(2)}`;
 }
